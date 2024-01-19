@@ -130,9 +130,9 @@ int main(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
   HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 1); //Prepare the UART Interrupt for receiving the commands
 
-  TIM2->ARR = 2000; // Time pulse is on = (ARR) * time per clock tick
-  TIM2->CCR3 = 1; // if it is 1 there is no delay (measured reaction time is 64ns). numbers greater than 1 add multiple of time per clock tick
-  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_3); //Starts the timer in interrupt mode
+  TIM2->ARR = registerWidth; // Time pulse is on = (ARR) * time per clock tick
+  TIM2->CCR3 = registerDelay; // if it is 1 there is no delay (measured reaction time is 64ns). numbers greater than 1 add multiple of time per clock tick
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -413,11 +413,16 @@ void Control_HandleMessage(uint8_t *message){
 			HAL_UART_Transmit(&huart1, carriageReturn, 1, 100); //\r
 
 			current_state = ARMED;
+
+			TIM2->ARR = registerWidth; // Time pulse is on = (ARR) * time per clock tick
+			TIM2->CCR3 = registerDelay; // if it is 1 there is no delay (measured reaction time is 64ns).
+			HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_3); //Starts the timer in interrupt mode
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 		}
 		break;
 	case ARMED:
 		if (Message_Equality(message, stop_call, 4)){
+			HAL_TIM_PWM_Stop_IT(&htim2, TIM_CHANNEL_3);
 			current_state = PROGRAM;
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 		}

@@ -130,7 +130,7 @@ int main(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
   HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 1); //Prepare the UART Interrupt for receiving the commands
 
-  TIM2->ARR = registerWidth; // Time pulse is on = (ARR) * time per clock tick
+  TIM2->ARR = registerWidth; // Time pulse is on = ((ARR) * time per clock tick)-CCR3
   TIM2->CCR3 = registerDelay; // if it is 1 there is no delay (measured reaction time is 64ns). numbers greater than 1 add multiple of time per clock tick
 
   /* USER CODE END 2 */
@@ -414,7 +414,7 @@ void Control_HandleMessage(uint8_t *message){
 
 			current_state = ARMED;
 
-			TIM2->ARR = registerWidth; // Time pulse is on = (ARR) * time per clock tick
+			TIM2->ARR = registerWidth; // Time pulse is on = ((ARR) * time per clock tick)-CCR3
 			TIM2->CCR3 = registerDelay; // if it is 1 there is no delay (measured reaction time is 64ns).
 			HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_3); //Starts the timer in interrupt mode
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
@@ -439,11 +439,12 @@ void Control_HandleMessage(uint8_t *message){
 		}
 		if (current_state == WIDTH){
 			targetWidth_ns = value;
-			registerWidth = value/CLOCKTIME;
+			registerWidth = (value/CLOCKTIME) + registerDelay;
 			current_state = PROGRAM;
 		}else {
 			targetDelay_ns = value;
 			registerDelay = ((value+QTIME-(RESPONSETIME + lineDelay_ns + swithDelay_ns))/CLOCKTIME)+1;
+			registerWidth = (targetWidth_ns/CLOCKTIME) + registerDelay;
 			current_state = PROGRAM;
 		}
 

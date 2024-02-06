@@ -60,7 +60,7 @@ uint32_t swithDelay_ns = 150; //The switch turn on time (from the datasheet)
 int current_state = PROGRAM;
 uint32_t targetDelay_ns = 0; //The desired delay for the pulse
 uint32_t targetWidth_ns = 20000; //The desired width of the pulse
-uint32_t registerDelay = 1; //The value for delay that will be put in the register
+uint32_t registerDelay = 17; //The value for delay that will be put in the register
 uint32_t registerWidth = 2000; //The value for width that will be put in the register
 
 

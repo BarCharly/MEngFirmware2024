@@ -36,6 +36,8 @@
 #define WIDTH 1002
 #define ARMED 1003
 
+#define DREGISTER 1004
+
 #define SENTENCESIZE 32
 
 #define RESPONSETIME 64 //Time from external trigger to timer starting (measured with oscilloscope
@@ -75,6 +77,7 @@ uint8_t commandIndex = 0;
 //Here we define the words to look for
 uint8_t width_call[5] = "width";
 uint8_t delay_call[5] = "delay";
+uint8_t dregister_call[4] = "CCR3";
 uint8_t arm_call[3] = "arm";
 uint8_t stop_call[4] = "stop";
 
@@ -378,6 +381,13 @@ void Control_HandleMessage(uint8_t *message){
 			HAL_UART_Transmit(&huart1, carriageReturn, 1, 100); //\r
 			current_state = DELAY;
 		}
+		//DREGISTER
+		if (Message_Equality(message, dregister_call, 4)){
+			HAL_UART_Transmit(&huart1, "type CCR3:", 10, 100);
+			HAL_UART_Transmit(&huart1, newLine, 1, 100); //\n
+			HAL_UART_Transmit(&huart1, carriageReturn, 1, 100); //\r
+			current_state = DREGISTER;
+		}
 		//READ
 		if (Message_Equality(message, read_call, 5)){
 			uint8_t number_out_str[8] = {0};
@@ -455,6 +465,11 @@ void Control_HandleMessage(uint8_t *message){
 		if (current_state == WIDTH){
 			targetWidth_ns = value;
 			registerWidth = (value/CLOCKTIME) + registerDelay;
+			current_state = PROGRAM;
+		}else if (current_state == DREGISTER){
+			registerDelay = value;
+			targetDelay_ns = -QTIME+(RESPONSETIME + lineDelay_ns + swithDelay_ns) + value *CLOCKTIME;
+			registerWidth = (targetWidth_ns/CLOCKTIME) + registerDelay;
 			current_state = PROGRAM;
 		}else {
 			targetDelay_ns = value;
